@@ -6,6 +6,7 @@ Copyright (C) 1999 Martin R. Jones <mjones@kde.org>
 Copyright (C) 2002 Luboš Luňák <l.lunak@kde.org>
 Copyright (C) 2003 Oswald Buddenhagen <ossi@kde.org>
 Copyright (C) 2014 Martin Gräßlin <mgraesslin@kde.org>
+Copyright (C) 2021 yujiashu <yujiashu@jingos.com>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -45,7 +46,7 @@ Authenticator::Authenticator(AuthenticationMode mode, QObject *parent)
     , m_checkPass(nullptr)
 {
     m_graceLockTimer->setSingleShot(true);
-    m_graceLockTimer->setInterval(3000);
+    m_graceLockTimer->setInterval(100);
     connect(m_graceLockTimer, &QTimer::timeout, this, &Authenticator::graceLockedChanged);
 
     if (mode == AuthenticationMode::Delayed) {
@@ -284,6 +285,8 @@ void KCheckPass::handleVerify()
             cantCheck();
             return;
         case ConvPutAuthAbort:
+        	emit failed();
+        	return;
         case ConvPutReadyForAuthentication:
             m_ready = true;
             if (m_mode == AuthenticationMode::Direct) {

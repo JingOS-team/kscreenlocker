@@ -4,6 +4,7 @@
 
 Copyright (C) 2004 Chris Howells <howells@kde.org>
 Copyright (C) 2011 Martin Gräßlin <mgraesslin@kde.org>
+Copyright (C) 2021 yujiashu <yujiashu@jingos.com>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -171,14 +172,15 @@ void UnlockApp::initialize()
 
     KScreenSaverSettingsBase::self()->load();
     KPackage::Package package = KPackage::PackageLoader::self()->loadPackage(QStringLiteral("Plasma/LookAndFeel"));
-    KConfigGroup cg(KSharedConfig::openConfig(QStringLiteral("kdeglobals")), "KDE");
-    m_packageName = cg.readEntry("LookAndFeelPackage", QString());
-    if (!m_packageName.isEmpty()) {
-        package.setPath(m_packageName);
-    }
-    if (!KScreenSaverSettingsBase::theme().isEmpty()) {
-        package.setPath(KScreenSaverSettingsBase::theme());
-    }
+    package.setPath(QStringLiteral("org.kde.plasma.phone"));
+    // KConfigGroup cg(KSharedConfig::openConfig(QStringLiteral("kdeglobals")), "KDE");
+    // m_packageName = cg.readEntry("LookAndFeelPackage", QString());
+    // if (!m_packageName.isEmpty()) {
+    //     package.setPath(m_packageName);
+    // }
+    // if (!KScreenSaverSettingsBase::theme().isEmpty()) {
+    //     package.setPath(KScreenSaverSettingsBase::theme());
+    // }
 
     m_mainQmlPath = package.fileUrl("lockscreenmainscript");
 

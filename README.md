@@ -1,9 +1,10 @@
+# kscreenlocker
 kscreenlocker can be configured to support the PAM ("Pluggable Authentication 
-Modules") system for password checking (for unlocking the display).
+Modules") system for password checking (for unlocking the display). it fixd by us to soluve iussue when password is null
 
 PAM is a flexible application-transparent configurable user-authentication 
 system found on FreeBSD, Solaris, and Linux (and maybe other unixes).
-
+checking
 Information about PAM may be found on its homepage
       http://www.kernel.org/pub/linux/libs/pam/
 (Despite the location, this information is NOT Linux-specific.)
@@ -67,4 +68,19 @@ continue working. They may also renew tokens etc., where supported.
 See the Linux PAM Administrators guide, which is part of the PAM
 distribution, for more details. 
 
+## Links
+* Home: www.jingos.com
+* Project page: https://invent.kde.org/jingosdev/kscreenlocker
+* File issues: https://invent.kde.org/jingosdev/kscreenlocker/issues
+* Development channel:  www.jingos.com
 
+## Installing
+This will compile and install kscreenlocker onto the system. When running kclock, make sure that kscreenlocker is running first (it is configured to autostart in sessions).
+
+```
+mkdir build
+cd build
+cmake ..
+make
+sudo make install
+```
