@@ -4,6 +4,7 @@
 
 Copyright (C) 2016 Martin Gräßlin <mgraesslin@kde.org>
 Copyright (C) 2019 Kevin Ottens <kevin.ottens@enioka.com>
+Copyright (C) 2021 Dexiang Meng <dexiang.meng@jingos.com>
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License as
@@ -24,10 +25,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import QtQuick 2.0
 import QtQuick.Controls 2.15 as QtControls
 import QtQuick.Layouts 1.1
+import jingos.display 1.0
+
 QtControls.StackView {
     id: main
     Layout.fillHeight: true
-    implicitHeight: 490
+    implicitHeight: JDisplay.dp(490)
     Layout.fillWidth: true
     property string sourceFile
     signal configurationChanged

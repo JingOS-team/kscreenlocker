@@ -3,6 +3,7 @@
  This file is part of the KDE project.
 
 Copyright (C) 2011 Martin Gräßlin <mgraesslin@kde.org>
+Copyright (C) 2021 Dexiang Meng <dexiang.meng@jingos.com>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -21,6 +22,7 @@ import QtQuick 2.0
 import QtQuick.Layouts 1.0
 import org.kde.plasma.core 2.0 as PlasmaCore
 import org.kde.plasma.components 2.0 as PlasmaComponents
+import jingos.display 1.0
 
 Item {
     id: root
@@ -29,12 +31,12 @@ Item {
     property alias notification: message.text
     property bool switchUserEnabled
     property bool capsLockOn
-    implicitWidth: layoutItem.width + theme.mSize(theme.defaultFont).width * 4 + 12
-    implicitHeight: layoutItem.height + 12
+    implicitWidth: layoutItem.width + theme.mSize(theme.defaultFont).width * 4 + JDisplay.dp(12)
+    implicitHeight: layoutItem.height + JDisplay.dp(12)
 
     anchors {
         fill: parent
-        margins: 6
+        margins: JDisplay.dp(6)
     }
 
     Column {

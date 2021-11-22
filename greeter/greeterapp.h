@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QGuiApplication>
 #include <KPackage/PackageStructure>
 #include <QUrl>
+#include <QTimer>
 
 namespace KWayland {
 namespace Client {
@@ -48,14 +49,17 @@ class LnFIntegration;
 class UnlockApp : public QGuiApplication
 {
     Q_OBJECT
+    Q_CLASSINFO("D-Bus Interface", "com.jingos.screenlocker")
 public:
     explicit UnlockApp(int &argc, char **argv);
     ~UnlockApp() override;
 
+    void initialViewSetup();
+
     void setTesting(bool enable);
     void setTheme(const QString &theme);
     void setImmediateLock(bool immediateLock);
-    void lockImmediately();
+
     void setGraceTime(int milliseconds);
     void setNoLock(bool noLock);
     void setKsldSocket(int socket);
@@ -66,8 +70,21 @@ public:
     void updateCanSuspend(bool set);
     void updateCanHibernate(bool set);
 
+    int readDisplayoffTimeFromFile();
+    void setDisplayoffTime(int seconds);
+
+Q_SIGNALS:
+    void requestUnlock();
+
 public Q_SLOTS:
     void desktopResized();
+    void onScreenAdded(QScreen *screen);
+
+    void lockImmediately();
+    void showLockScreen();
+    void hideLockScreen();
+
+    void displayPowerStateChange(int,int);
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event) override;
@@ -85,6 +102,7 @@ private:
     void initializeWayland();
     void shareEvent(QEvent *e, KQuickAddons::QuickViewSharedEngine *from);
     void loadWallpaperPlugin(KQuickAddons::QuickViewSharedEngine *view);
+    void screenGeometryChanged(QScreen *screen, const QRect &geo);
     Authenticator *createAuthenticator();
     QWindow *getActiveScreen();
 
@@ -115,6 +133,7 @@ private:
     KWayland::Client::PlasmaShell *m_plasmaShell = nullptr;
     WallpaperIntegration *m_wallpaperIntegration;
     LnFIntegration *m_lnfIntegration;
+    QTimer *m_windowhideTimer;
 };
 } // namespace
 

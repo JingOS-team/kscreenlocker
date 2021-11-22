@@ -6,7 +6,7 @@
   <kcfgfile name="kscreenlockerrc" />
   <group name="Daemon">
     <entry key="Autolock" type="Bool">
-      <default>true</default>
+      <default>false</default>
       <label>Screen lock enabled</label>
       <whatsthis>Sets whether the screen will be locked after the specified time.</whatsthis>
     </entry>
@@ -17,7 +17,7 @@
       <whatsthis>Sets the minutes after which the screen is locked.</whatsthis>
     </entry>
     <entry key="Lock" type="Bool">
-      <default>true</default>
+      <default>false</default>
       <label></label>
       <whatsthis></whatsthis>
     </entry>

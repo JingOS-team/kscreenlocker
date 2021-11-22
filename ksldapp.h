@@ -47,6 +47,20 @@ enum class EstablishLock {
 class AbstractLocker;
 class WaylandServer;
 
+class DbusReceiver : public QObject
+{
+    Q_OBJECT
+    Q_CLASSINFO("D-Bus Interface", "com.jingos.screenlockreceiver")
+
+Q_SIGNALS:
+    void unlocked();
+    void locked();
+
+public Q_SLOTS:
+    void onScreenUnlocked();
+    void onScreenLocked();
+};
+
 class KSCREENLOCKER_EXPORT KSldApp : public QObject
 {
     Q_OBJECT
@@ -129,6 +143,7 @@ Q_SIGNALS:
     void aboutToLock();
     void locked();
     void unlocked();
+    void clear();
     void lockStateChanged();
 
 private Q_SLOTS:
@@ -138,6 +153,8 @@ private Q_SLOTS:
 
 public Q_SLOTS:
     void lockScreenShown();
+    void requestLock();
+    void requestUnlock();
 
 private:
     void initializeX11();
@@ -183,6 +200,8 @@ private:
     int m_greeterCrashedCounter = 0;
     QProcessEnvironment m_greeterEnv;
     PowerManagementInhibition *m_powerManagementInhibition;
+
+    DbusReceiver m_dbusReceiver;
 
     int m_waylandFd = -1;
 

@@ -22,6 +22,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDateTime>
 #include <QCommandLineParser>
 #include <QSessionManager>
+#include <QDBusConnection>
+#include <QDebug>
+#include <QDBusError>
+#include <QMutex>
+#include <QFile>
+#include <QTextStream>
 
 #include <iostream>
 
@@ -39,6 +45,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <unistd.h>
 #include <sys/procctl.h>
 #endif
+
 
 static void signalHandler(int signum)
 {
@@ -58,8 +65,11 @@ static void signalHandler(int signum)
         instance->exit(1);
         break;
       case SIGUSR1:
-        qCDebug(KSCREENLOCKER_GREET) << "Greeter received SIGUSR1. Will lock immediately.";
+        qDebug()<< "[liubangguo]Greeter received SIGUSR1. Will lock immediately.";
         instance->lockImmediately();
+        break;
+    case SIGBUS:
+        instance->hideLockScreen();
         break;
     }
 }
@@ -88,6 +98,14 @@ int main(int argc, char* argv[])
     // Suppresses modal warnings about unwritable configuration files which may render the system inaccessible
     qputenv("KDE_HOME_READONLY", "1");
 
+    //[liubangguo]for register dbus
+    QDBusConnection connection = QDBusConnection::sessionBus();
+    if(!connection.registerService(QStringLiteral("com.jingos.screenlocker")))
+    {
+        qDebug() << "error:" << connection.lastError().message();
+        exit(-1);
+    }
+
     ScreenLocker::UnlockApp app(argc, argv);
     app.setQuitOnLastWindowClosed(false);
     QCoreApplication::setApplicationName(QStringLiteral("kscreenlocker_greet"));
@@ -95,6 +113,8 @@ int main(int argc, char* argv[])
     QCoreApplication::setOrganizationDomain(QStringLiteral("kde.org"));
 
     KQuickAddons::QtQuickSettings::init();
+
+    connection.registerObject(QStringLiteral("/com/jingos/screenlocker"), &app,QDBusConnection::ExportAllSlots);
 
     // disable session management for the greeter
     auto disableSessionManagement = [](QSessionManager &sm) {
@@ -181,7 +201,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    app.desktopResized();
+    app.initialViewSetup();
 
     // This allow ksmserver to know when the application has actually finished setting itself up.
     // Crucial for blocking until it is ready, ensuring locking happens before sleep, e.g.
@@ -193,5 +213,7 @@ int main(int argc, char* argv[])
     sa.sa_flags = SA_RESTART;
     sigaction(SIGTERM, &sa, nullptr);
     sigaction(SIGUSR1, &sa, nullptr);
+    sigaction(SIGBUS, &sa, nullptr);
+
     return app.exec();
 }

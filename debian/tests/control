@@ -1,0 +1,11 @@
+Tests: testsuite
+Depends: build-essential,
+         dbus (>= 1.8),
+         kded5,
+         libkf5service-bin,
+         openbox,
+         xauth,
+         xvfb,
+         @,
+         @builddeps@
+Restrictions: build-needed, allow-stderr

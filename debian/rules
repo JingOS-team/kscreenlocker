@@ -1,0 +1,16 @@
+#!/usr/bin/make -f
+
+export DEB_LDFLAGS_MAINT_APPEND := -Wl,--as-needed
+
+l10npkgs_firstversion_ok := 4:4.14.0-2
+include /usr/share/pkg-kde-tools/qt-kde-team/2/l10n-packages.mk
+
+%:
+	dh $@ --with kf5,pkgkde_symbolshelper --buildsystem kf5 --without build_stamp
+
+override_dh_auto_test:
+	# Disable dh_auto_test at build time
+	:
+
+override_dh_gencontrol: l10npkgs_firstversion_ok
+	dh_gencontrol

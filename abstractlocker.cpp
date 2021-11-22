@@ -47,6 +47,11 @@ BackgroundWindow::~BackgroundWindow() = default;
 
 void BackgroundWindow::paintEvent(QPaintEvent* )
 {
+    //[liubangguo]canceled background window
+#if defined (__arm64__) || defined (__aarch64__)
+    return;
+#endif
+
     QPainter p(this);
     p.fillRect(0, 0, width(), height(), Qt::black);
     if (m_greeterFailure) {

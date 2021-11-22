@@ -3,6 +3,7 @@
  This file is part of the KDE project.
 
 Copyright (C) 2020 David Redondo <kde@david-redondo.de>
+Copyright (C) 2021 Dexiang Meng <dexiang.meng@jingos.com>
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License as
@@ -27,10 +28,11 @@ import QtQuick.Layouts 1.14
 import org.kde.kcm 1.5 as KCM
 import org.kde.kirigami 2.12 as Kirigami
 import org.kde.kquickcontrols 2.0 as KQuickControls
+import jingos.display 1.0
 
 KCM.SimpleKCM {
-    implicitHeight: 800
-    implicitWidth: 800
+    implicitHeight: JDisplay.dp(800)
+    implicitWidth: JDisplay.dp(800)
     id: root
     ColumnLayout {
         spacing: 0

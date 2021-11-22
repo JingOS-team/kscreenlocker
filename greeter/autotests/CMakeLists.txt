@@ -1,6 +1,6 @@
 add_definitions(-DKSCREENLOCKER_UNIT_TEST)
 include(ECMMarkAsTest)
-
+find_package(Qt5 ${QT_MIN_VERSION} CONFIG REQUIRED COMPONENTS DBus Quick )
 #####################################
 # fakekcheckpass
 #####################################
@@ -16,7 +16,7 @@ set( authenticatorTest_SRCS
      ../authenticator.cpp
 )
 add_executable(authenticatorTest ${authenticatorTest_SRCS})
-target_link_libraries(authenticatorTest Qt5::Test)
+target_link_libraries(authenticatorTest Qt5::Test Qt::DBus)
 add_test(NAME ksmserver-authenticatorTest COMMAND authenticatorTest)
 ecm_mark_as_test(authenticatorTest)
 
@@ -26,4 +26,4 @@ ecm_mark_as_test(authenticatorTest)
 add_executable(killTest killtest.cpp)
 add_test(NAME kscreenlocker-killTest COMMAND killTest)
 ecm_mark_as_test(killTest)
-target_link_libraries(killTest Qt5::Test)
+target_link_libraries(killTest Qt5::Test Qt::DBus)

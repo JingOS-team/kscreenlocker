@@ -6,7 +6,6 @@ Copyright (C) 1999 Martin R. Jones <mjones@kde.org>
 Copyright (C) 2002 Luboš Luňák <l.lunak@kde.org>
 Copyright (C) 2003 Oswald Buddenhagen <ossi@kde.org>
 Copyright (C) 2014 Martin Gräßlin <mgraesslin@kde.org>
-Copyright (C) 2021 yujiashu <yujiashu@jingos.com>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -30,6 +29,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFile>
 #include <QSocketNotifier>
 #include <QTimer>
+#include <QDBusMessage>
+#include <QDebug>
+#include <QDBusConnection>
 
 // system
 #include <errno.h>
@@ -53,6 +55,18 @@ Authenticator::Authenticator(AuthenticationMode mode, QObject *parent)
         m_checkPass = new KCheckPass(AuthenticationMode::Delayed, this);
         setupCheckPass();
     }
+
+    //支持X86翻盖close事件
+    QDBusConnection::sessionBus().connect(QStringLiteral(""), QStringLiteral("/org/kde/Solid/PowerManagement"),
+                                         QStringLiteral("org.kde.Solid.PowerManagement"), QStringLiteral("lidClosedChanged"),
+                                         this, SLOT(lidClosed(bool)));
+    QDBusConnection::systemBus().connect(QStringLiteral("com.jingos.repowerd.Screen"), QStringLiteral("/com/jingos/repowerd/Screen"),
+                                         QStringLiteral("com.jingos.repowerd.Screen"), QStringLiteral("DisplayPowerStateChange"),
+                                         this, SLOT(reviceSlakeScreen(int, int)));
+
+    //添加通知中心删除通知响应
+     QDBusConnection::sessionBus().connect(QStringLiteral(), QStringLiteral("/org/jingos/notification"),
+        QStringLiteral("org.jingos.notification"), QStringLiteral("closeNotificationId"), this,SLOT(closeNotificationAction(uint)));
 }
 
 Authenticator::~Authenticator() = default;
@@ -80,6 +94,19 @@ void Authenticator::tryUnlock(const QString &password)
     }
 }
 
+void Authenticator::reviceSlakeScreen(int status, int )
+{
+     emit screenBrightness(status);
+}
+
+void Authenticator::lidClosed(bool lidClosed)
+{
+    qDebug()<<"[liubangguo]reviceSlakeScreen";
+    if(lidClosed == true){
+        emit screenBrightness(0);
+    }
+}
+
 void Authenticator::setupCheckPass()
 {
     connect(m_checkPass, &KCheckPass::succeeded, this, &Authenticator::succeeded);
@@ -99,6 +126,31 @@ bool Authenticator::isGraceLocked() const
     return m_graceLockTimer->isActive();
 }
 
+void Authenticator::resetCheckPass()
+{
+    if(m_checkPass){
+        delete m_checkPass;
+        m_checkPass = nullptr;
+    }
+}
+
+void Authenticator::emitShowViewSig()
+{
+    emit showViewSig();
+}
+
+void Authenticator::closelockScreeNotificationId(uint id)
+{
+    QDBusMessage message =QDBusMessage::createSignal(QStringLiteral("/org/jingos/lockScreeNotification"), 
+            QStringLiteral("org.jingos.lockScreenotification"), QStringLiteral("closelockScreeNotificationId"));
+    message << id;
+
+    QDBusConnection::sessionBus().send(message);
+}
+void Authenticator::closeNotificationAction(uint id)
+{
+    emit closeNotificationId(id);
+}
 KCheckPass::KCheckPass(AuthenticationMode mode, QObject *parent)
     : QObject(parent)
     , m_notifier(nullptr)
@@ -115,6 +167,17 @@ KCheckPass::KCheckPass(AuthenticationMode mode, QObject *parent)
 KCheckPass::~KCheckPass()
 {
     reapVerify();
+}
+
+void KCheckPass::onSuccessed()
+{
+
+//    ::kill(m_pid, SIGBUS);
+}
+
+void KCheckPass::onFailed()
+{
+//    ::kill(m_pid, SIGBUS);
 }
 
 void KCheckPass::start()

@@ -40,9 +40,18 @@ public:
     ~Authenticator() override;
 
     bool isGraceLocked() const;
+    void resetCheckPass();
+    void emitShowViewSig();
+    Q_INVOKABLE void closelockScreeNotificationId(uint id);
+
+
 
 public Q_SLOTS:
     void tryUnlock(const QString &password);
+    void reviceSlakeScreen(int status, int);
+    void lidClosed(bool);
+
+    void closeNotificationAction(uint id);
 
 Q_SIGNALS:
     void failed();
@@ -50,7 +59,10 @@ Q_SIGNALS:
     void graceLockedChanged();
     void message(const QString & msg); // don't remove the "msg" param, used in QML!!!
     void error(const QString & err); // don't remove the "err" param, used in QML!!!
+    void screenBrightness(int flag);
+    void showViewSig();
 
+    void closeNotificationId(uint id);
 private:
     void setupCheckPass();
     QTimer *m_graceLockTimer;
@@ -84,6 +96,8 @@ Q_SIGNALS:
 
 private Q_SLOTS:
     void handleVerify();
+    void onSuccessed();
+    void onFailed();
 
 private:
     void cantCheck();

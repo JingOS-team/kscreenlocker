@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.0)
 
 project(kscreenlocker)
-set(PROJECT_VERSION "5.20.80")
+set(PROJECT_VERSION "5.21.80")
 set(PROJECT_VERSION_MAJOR 5)
 
 set(QT_MIN_VERSION "5.15.0")
-set(KF5_MIN_VERSION "5.74")
+set(KF5_MIN_VERSION "5.78")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -292,3 +292,6 @@ if(BUILD_TESTING)
    add_subdirectory(tests)
 endif()
 feature_summary(WHAT ALL INCLUDE_QUIET_PACKAGES FATAL_ON_MISSING_REQUIRED_PACKAGES)
+
+find_package(KF5I18n CONFIG REQUIRED)
+ki18n_install(po)

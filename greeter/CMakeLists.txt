@@ -47,9 +47,11 @@ target_link_libraries(kscreenlocker_greet
                         Qt5::Quick
                         Qt5::Qml
                         Qt5::X11Extras
+			Qt::DBus
                         ${X11_LIBRARIES}
                         KF5::WaylandClient
                         Wayland::Client
+			KScreenLocker
                         )
 
 install(TARGETS kscreenlocker_greet DESTINATION ${KDE_INSTALL_LIBEXECDIR})

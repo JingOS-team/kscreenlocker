@@ -1,0 +1,100 @@
+# Copyright (C) YEAR This_file_is_part_of_KDE
+# This file is distributed under the same license as the PACKAGE package.
+#
+# Steve Allewell <steve.allewell@gmail.com>, 2014, 2015, 2017, 2018, 2020.
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2020-11-12 02:35+0100\n"
+"PO-Revision-Date: 2020-09-26 14:02+0100\n"
+"Last-Translator: Steve Allewell <steve.allewell@gmail.com>\n"
+"Language-Team: British English <kde-l10n-en_gb@kde.org>\n"
+"Language: en_GB\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Lokalize 20.08.1\n"
+
+#, kde-format
+msgctxt "NAME OF TRANSLATORS"
+msgid "Your names"
+msgstr "Steve Allewell"
+
+#, kde-format
+msgctxt "EMAIL OF TRANSLATORS"
+msgid "Your emails"
+msgstr "steve.allewell@gmail.com"
+
+#: abstractlocker.cpp:53
+#, kde-format
+msgid ""
+"The screen locker is broken and unlocking is not possible anymore.\n"
+"In order to unlock it either ConsoleKit or LoginD is needed, none of\n"
+"which could be found on your system."
+msgstr ""
+"The screen locker is broken and unlocking is not possible any more.\n"
+"In order to unlock it either ConsoleKit or LoginD is needed, none of\n"
+"which could be found on your system."
+
+#: abstractlocker.cpp:56
+#, kde-format
+msgid ""
+"The screen locker is broken and unlocking is not possible anymore.\n"
+"In order to unlock switch to a virtual terminal (e.g. Ctrl+Alt+F2),\n"
+"log in as root and execute the command:\n"
+"\n"
+"# ck-unlock-session <session-name>\n"
+"\n"
+msgstr ""
+"The screen locker is broken and unlocking is not possible any more.\n"
+"In order to unlock switch to a virtual terminal (e.g. Ctrl+Alt+F2),\n"
+"log in as root and execute the command:\n"
+"\n"
+"# ck-unlock-session <session-name>\n"
+"\n"
+
+#: abstractlocker.cpp:60
+#, kde-format
+msgid ""
+"The screen locker is broken and unlocking is not possible anymore.\n"
+"In order to unlock switch to a virtual terminal (e.g. Ctrl+Alt+F2),\n"
+"log in and execute the command:\n"
+"\n"
+"loginctl unlock-session %1\n"
+"\n"
+"Afterwards switch back to the running session (Ctrl+Alt+F%2)."
+msgstr ""
+"The screen locker is broken and unlocking is not possible anymore.\n"
+"In order to unlock switch to a virtual terminal (e.g. Ctrl+Alt+F2),\n"
+"log in and execute the command:\n"
+"\n"
+"loginctl unlock-session %1\n"
+"\n"
+"Afterwards switch back to the running session (Ctrl+Alt+F%2)."
+
+#: ksldapp.cpp:173
+#, kde-format
+msgid "Lock Session"
+msgstr "Lock Session"
+
+#: ksldapp.cpp:422
+#, kde-format
+msgid "Screen locked"
+msgstr "Screen locked"
+
+#: ksldapp.cpp:582
+#, kde-format
+msgid "Screen unlocked"
+msgstr "Screen unlocked"
+
+#: logind.cpp:200
+#, kde-format
+msgid "Screen Locker"
+msgstr "Screen Locker"
+
+#: logind.cpp:201
+#, kde-format
+msgid "Ensuring that the screen gets locked before going to sleep"
+msgstr "Ensuring that the screen gets locked before going to sleep"

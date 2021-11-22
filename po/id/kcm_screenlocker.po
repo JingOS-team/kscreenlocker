@@ -1,0 +1,118 @@
+# Copyright (C) YEAR This file is copyright:
+# This file is distributed under the same license as the kscreenlocker package.
+# Wantoyo <wantoyek@gmail.com>, 2018, 2019.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: kscreenlocker\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2020-12-18 02:39+0100\n"
+"PO-Revision-Date: 2019-08-16 06:00+0700\n"
+"Last-Translator: Wantoyo <wantoyek@gmail.com>\n"
+"Language-Team: Indonesian <kde-i18n-doc@kde.org>\n"
+"Language: id\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#, kde-format
+msgctxt "NAME OF TRANSLATORS"
+msgid "Your names"
+msgstr ""
+
+#, kde-format
+msgctxt "EMAIL OF TRANSLATORS"
+msgid "Your emails"
+msgstr ""
+
+#: kcm.cpp:55
+#, kde-format
+msgid "Screen Locking"
+msgstr ""
+
+#: kcm.cpp:57
+#, kde-format
+msgid "Martin Gräßlin"
+msgstr ""
+
+#: kcm.cpp:58
+#, kde-format
+msgid "Kevin Ottens"
+msgstr ""
+
+#: package/contents/ui/Appearance.qml:30
+#, fuzzy, kde-format
+#| msgid "Appearance"
+msgctxt "@title"
+msgid "Appearance"
+msgstr "Penampilan"
+
+#: package/contents/ui/Appearance.qml:43
+#, fuzzy, kde-format
+#| msgid "Wallpaper &type:"
+msgid "Wallpaper type:"
+msgstr "&Tipe wallpaper:"
+
+#: package/contents/ui/main.qml:39
+#, fuzzy, kde-format
+#| msgid "Lock screen:"
+msgid "Lock screen automatically:"
+msgstr "Layar kunci:"
+
+#: package/contents/ui/main.qml:41
+#, kde-format
+msgctxt "First part of sentence \"Automatically after X minutes\""
+msgid "After"
+msgstr ""
+
+#: package/contents/ui/main.qml:54
+#, fuzzy, kde-format
+#| msgctxt "Spinbox suffix"
+#| msgid " minute"
+#| msgid_plural " minutes"
+msgid "%1 minute"
+msgid_plural "%1 minutes"
+msgstr[0] " menit"
+msgstr[1] " menit"
+
+#: package/contents/ui/main.qml:69
+#, fuzzy, kde-format
+#| msgid "After waking from sleep"
+msgctxt "@option:check"
+msgid "After waking from sleep"
+msgstr "Sesudah bangun dari tidur"
+
+#: package/contents/ui/main.qml:84
+#, fuzzy, kde-format
+#| msgid "Allow unlocking without password for:"
+msgctxt "@label:spinbox"
+msgid "Allow unlocking without password for:"
+msgstr "Bolehkan lepas-kunci tanpa kata-sandi untuk:"
+
+#: package/contents/ui/main.qml:89
+#, fuzzy, kde-format
+#| msgctxt "Spinbox suffix"
+#| msgid " second"
+#| msgid_plural " seconds"
+msgid "%1 second"
+msgid_plural "%1 seconds"
+msgstr[0] " detik"
+msgstr[1] " detik"
+
+#: package/contents/ui/main.qml:108
+#, kde-format
+msgid "Keyboard shortcut:"
+msgstr "Pintasan keyboard:"
+
+#: package/contents/ui/main.qml:123
+#, fuzzy, kde-format
+#| msgid "Appearance"
+msgid "Appearance:"
+msgstr "Penampilan"
+
+#: package/contents/ui/main.qml:124
+#, kde-format
+msgctxt "@action:button"
+msgid "Configure..."
+msgstr ""

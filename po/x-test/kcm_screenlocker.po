@@ -1,0 +1,105 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR This file is copyright:
+# This file is distributed under the same license as the kscreenlocker package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: kcm_screenlocker\n"
+"Report-Msgid-Bugs-To: https://bugs.kde.org\n"
+"POT-Creation-Date: 2020-12-18 02:39+0100\n"
+"PO-Revision-Date: 2020-07-08 04:03+0000\n"
+"Last-Translator: transxx.py program <null@kde.org>\n"
+"Language-Team: KDE Test Language <kde-i18n-doc@kde.org>\n"
+"Language: x-test\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#, kde-format
+msgctxt "NAME OF TRANSLATORS"
+msgid "Your names"
+msgstr "xxYour namesxx"
+
+#, kde-format
+msgctxt "EMAIL OF TRANSLATORS"
+msgid "Your emails"
+msgstr "xxYour emailsxx"
+
+#: kcm.cpp:55
+#, kde-format
+msgid "Screen Locking"
+msgstr "xxScreen Lockingxx"
+
+#: kcm.cpp:57
+#, kde-format
+msgid "Martin Gräßlin"
+msgstr "xxMartin Gräßlinxx"
+
+#: kcm.cpp:58
+#, kde-format
+msgid "Kevin Ottens"
+msgstr "xxKevin Ottensxx"
+
+#: package/contents/ui/Appearance.qml:30
+#, kde-format
+msgctxt "@title"
+msgid "Appearance"
+msgstr "xxAppearancexx"
+
+#: package/contents/ui/Appearance.qml:43
+#, kde-format
+msgid "Wallpaper type:"
+msgstr "xxWallpaper type:xx"
+
+#: package/contents/ui/main.qml:39
+#, kde-format
+msgid "Lock screen automatically:"
+msgstr "xxLock screen automatically:xx"
+
+#: package/contents/ui/main.qml:41
+#, kde-format
+msgctxt "First part of sentence \"Automatically after X minutes\""
+msgid "After"
+msgstr "xxAfterxx"
+
+#: package/contents/ui/main.qml:54
+#, kde-format
+msgid "%1 minute"
+msgid_plural "%1 minutes"
+msgstr[0] "xx%1 minutesxx"
+
+#: package/contents/ui/main.qml:69
+#, kde-format
+msgctxt "@option:check"
+msgid "After waking from sleep"
+msgstr "xxAfter waking from sleepxx"
+
+#: package/contents/ui/main.qml:84
+#, kde-format
+msgctxt "@label:spinbox"
+msgid "Allow unlocking without password for:"
+msgstr "xxAllow unlocking without password for:xx"
+
+#: package/contents/ui/main.qml:89
+#, kde-format
+msgid "%1 second"
+msgid_plural "%1 seconds"
+msgstr[0] "xx%1 secondsxx"
+
+#: package/contents/ui/main.qml:108
+#, kde-format
+msgid "Keyboard shortcut:"
+msgstr "xxKeyboard shortcut:xx"
+
+#: package/contents/ui/main.qml:123
+#, kde-format
+msgid "Appearance:"
+msgstr "xxAppearance:xx"
+
+#: package/contents/ui/main.qml:124
+#, kde-format
+msgctxt "@action:button"
+msgid "Configure..."
+msgstr "xxConfigure...xx"

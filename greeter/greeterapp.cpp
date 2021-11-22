@@ -4,7 +4,6 @@
 
 Copyright (C) 2004 Chris Howells <howells@kde.org>
 Copyright (C) 2011 Martin Gräßlin <mgraesslin@kde.org>
-Copyright (C) 2021 yujiashu <yujiashu@jingos.com>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -25,6 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "noaccessnetworkaccessmanagerfactory.h"
 #include "wallpaper_integration.h"
 #include "lnf_integration.h"
+
+#include "../ksldapp.h"
 
 #include <kscreenlocker_greet_logging.h>
 #include <config-kscreenlocker.h>
@@ -71,6 +72,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
 #include <fixx11h.h>
+
+#include <QDBusConnection>
+#include <QDBusConnectionInterface>
+#include <QDebug>
+#include <QDBusError>
+#include <QDBusMessage>
+#include <QDBusPendingCall>
+#include <QDBusInterface>
 //
 #include <xcb/xcb.h>
 
@@ -121,15 +130,48 @@ UnlockApp::UnlockApp(int &argc, char **argv)
     , m_lnfIntegration(new LnFIntegration(this))
 {
     m_authenticator = createAuthenticator();
+    m_windowhideTimer = new QTimer(this);
+    m_windowhideTimer->setSingleShot(true);
     // It's a queued connection to give the QML part time to eventually execute code connected to Authenticator::succeeded if any
+    //liubangguo
+#if defined (__arm64__) || defined (__aarch64__)
+    connect(m_authenticator, &Authenticator::succeeded, this, &UnlockApp::hideLockScreen, Qt::QueuedConnection);
+    if (QDBusConnection::systemBus().interface()->isServiceRegistered(QStringLiteral("com.jingos.repowerd.Screen"))) {
+        if (!QDBusConnection::systemBus().connect(QStringLiteral("com.jingos.repowerd.Screen"),
+                                                   QStringLiteral("/com/jingos/repowerd/Screen"),
+                                                   QStringLiteral("com.jingos.repowerd.Screen"),
+                                                   QStringLiteral("DisplayPowerStateChange"), this,
+                                                   SLOT(displayPowerStateChange(int,int)))) {
+            qDebug() << "error connecting to Brightness changes via dbus";
+        }
+    }
+#else
     connect(m_authenticator, &Authenticator::succeeded, this, &QCoreApplication::quit, Qt::QueuedConnection);
+#endif
     initialize();
-    connect(this, &UnlockApp::screenAdded, this, &UnlockApp::desktopResized);
+    connect(this, &UnlockApp::screenAdded, this, &UnlockApp::onScreenAdded);
     connect(this, &UnlockApp::screenRemoved, this, &UnlockApp::desktopResized);
+
+    connect(this,&UnlockApp::requestUnlock,KSldApp::self(),&KSldApp::requestUnlock);
+    connect(m_windowhideTimer, &QTimer::timeout, this, [this](){
+        KQuickAddons::QuickViewSharedEngine *view = nullptr;
+        for (KQuickAddons::QuickViewSharedEngine *v : qAsConst(m_views)) {
+            v->hide();
+            QDBusConnection::sessionBus().asyncCall(QDBusMessage::createMethodCall(QStringLiteral("com.jingos.screenlockreceiver"),
+                                                                                QStringLiteral("/com/jingos/screenlockreceiver"),
+                                                                                QStringLiteral("com.jingos.screenlockreceiver"),
+                                                                                QStringLiteral("onScreenUnlocked")));
+
+            int secs = readDisplayoffTimeFromFile()/1000;
+            setDisplayoffTime(secs);
+        }
+    });
+
 
     if (QX11Info::isPlatformX11()) {
         installNativeEventFilter(new FocusOutEventFilter);
     }
+
 }
 
 UnlockApp::~UnlockApp()
@@ -199,6 +241,17 @@ void UnlockApp::initialize()
     m_userImage = user.faceIconPath();
 
     installEventFilter(this);
+}
+
+void UnlockApp::displayPowerStateChange(int state,int reason)
+{
+    if(state == 0)//灭屏
+    {
+        QDBusConnection::sessionBus().asyncCall(QDBusMessage::createMethodCall(QStringLiteral("org.freedesktop.ScreenSaver"),
+                                                                           QStringLiteral("/ScreenSaver"),
+                                                                           QStringLiteral("org.freedesktop.ScreenSaver"),
+                                                                           QStringLiteral("Lock")));
+    }
 }
 
 QWindow *UnlockApp::getActiveScreen()
@@ -277,6 +330,43 @@ void UnlockApp::loadWallpaperPlugin(KQuickAddons::QuickViewSharedEngine *view)
     );
 }
 
+void UnlockApp::onScreenAdded(QScreen *screen)
+{
+    // Lambda connections can not have uniqueness constraints, ensure
+    // geometry change signals are only connected once
+    connect(screen, &QScreen::geometryChanged, this, [this, screen] (const QRect& geo) { screenGeometryChanged(screen, geo); });
+    desktopResized();
+}
+
+void UnlockApp::screenGeometryChanged(QScreen *screen, const QRect &geo)
+{
+    // We map screens() to m_views by index and Qt is free to
+    // reorder screens, so pointer to pointer connections
+    // may not remain matched by index, perform index
+    // mapping in the change event itself
+    const int screenIndex = QGuiApplication::screens().indexOf(screen);
+    if (screenIndex < 0) {
+        qCWarning(KSCREENLOCKER_GREET) << "Screen not found, not updating geometry" << screen;
+        return;
+    }
+    if (screenIndex >= m_views.size()) {
+        qCWarning(KSCREENLOCKER_GREET) << "Screen index out of range, not updating geometry" << screenIndex;
+        return;
+    }
+    KQuickAddons::QuickViewSharedEngine* view = m_views[screenIndex];
+    view->setGeometry(geo);
+    KWayland::Client::PlasmaShellSurface *plasmaSurface = view->property("plasmaShellSurface").value<KWayland::Client::PlasmaShellSurface *>();
+    if (plasmaSurface) {
+        plasmaSurface->setPosition(view->geometry().topLeft());
+    }
+}
+
+void UnlockApp::initialViewSetup()
+{
+    for (QScreen *screen : screens())
+        connect(screen, &QScreen::geometryChanged, this, [this, screen] (const QRect& geo) { screenGeometryChanged(screen, geo); });
+    desktopResized();
+}
 void UnlockApp::desktopResized()
 {
     const int nScreens = screens().count();
@@ -289,7 +379,7 @@ void UnlockApp::desktopResized()
     for (int i = m_views.count(); i < nScreens; ++i) {
         // create the view
         auto *view = new KQuickAddons::QuickViewSharedEngine();
-        view->setColor(Qt::black);
+        view->setColor(Qt::transparent);
         auto screen = QGuiApplication::screens()[i];
         view->setGeometry(screen->geometry());
 
@@ -332,6 +422,16 @@ void UnlockApp::desktopResized()
         context->setContextProperty(QStringLiteral("config"), m_lnfIntegration->configuration());
 
         view->setSource(m_mainQmlPath);
+
+        //[liubangguo]add for qml signal
+#if defined (__arm64__) || defined (__aarch64__)
+        QObject *pRoot = (QObject*)view->rootObject();
+        if (pRoot != NULL) {
+                connect(view, SIGNAL(visibleChanged(bool)), pRoot, SIGNAL(visibleChanged()));
+        }
+#endif
+
+
         // on error, load the fallback lockscreen to not lock the user out of the system
         if (view->status() != QQmlComponent::Ready) {
             static const QUrl fallbackUrl(QUrl(QStringLiteral("qrc:/fallbacktheme/LockScreen.qml")));
@@ -541,6 +641,43 @@ void UnlockApp::lockImmediately()
 {
     setImmediateLock(true);
     setLockedPropertyOnViews();
+
+    showLockScreen();
+}
+
+void UnlockApp::hideLockScreen()
+{
+    qDebug()<<"[liubangguo]UnlockApp::hideLockScreen";
+    m_authenticator->resetCheckPass();
+    if (m_windowhideTimer) {
+        m_windowhideTimer->start(150);
+    } else {
+        KQuickAddons::QuickViewSharedEngine *view = nullptr;
+        for (KQuickAddons::QuickViewSharedEngine *v : qAsConst(m_views)) {
+            v->hide();
+            QDBusConnection::sessionBus().asyncCall(QDBusMessage::createMethodCall(QStringLiteral("com.jingos.screenlockreceiver"),
+                                                                                QStringLiteral("/com/jingos/screenlockreceiver"),
+                                                                                QStringLiteral("com.jingos.screenlockreceiver"),
+                                                                                QStringLiteral("onScreenUnlocked")));
+
+            int secs = readDisplayoffTimeFromFile()/1000;
+            setDisplayoffTime(secs);
+        }
+    }
+    //QCoreApplication::quit();
+}
+
+void UnlockApp::showLockScreen()
+{
+    m_authenticator->emitShowViewSig();
+    qDebug()<<"[liubangguo]UnlockApp::showLockScreen";
+    KQuickAddons::QuickViewSharedEngine *view = nullptr;
+    for (KQuickAddons::QuickViewSharedEngine *v : qAsConst(m_views)) {
+        v->showFullScreen();
+        qDebug()<<"[liubangguo]UnlockApp::showLockScreen,view show";
+    }
+
+    setDisplayoffTime(10);
 }
 
 bool UnlockApp::eventFilter(QObject *obj, QEvent *event)
@@ -758,6 +895,41 @@ void UnlockApp::updateCanHibernate(bool set)
         QQmlProperty hibernateProperty((*it)->rootObject(), QStringLiteral("suspendToDiskSupported"));
         hibernateProperty.write(m_canHibernate);
     }
+}
+
+void UnlockApp::setDisplayoffTime(int secs)
+{
+    QDBusMessage message = QDBusMessage::createMethodCall(QStringLiteral("com.canonical.repowerd"),
+                                                          QStringLiteral("/com/canonical/repowerd"),
+                                                          QStringLiteral("com.canonical.repowerd"),
+                                                          QStringLiteral("SetInactivityBehavior"));
+    //[liubangguo]设置插电灭屏时间
+    message.setArguments({ QStringLiteral("display-off") , QStringLiteral("line-power") , secs});
+    QDBusConnection::systemBus().call(message);
+
+    //[liubangguo]设置电池灭屏时间
+    message.setArguments({ QStringLiteral("display-off") , QStringLiteral("battery") , secs});
+    QDBusConnection::systemBus().call(message);
+
+
+    QDBusInterface brightnessDimIface(
+            QStringLiteral("com.jingos.repowerd.Screen"),
+            QStringLiteral("/com/jingos/repowerd/Screen"),
+            QStringLiteral("com.jingos.repowerd.Screen"),QDBusConnection::systemBus());
+    //设置暗屏时间time
+    if(secs > 0) secs = secs+10;
+    brightnessDimIface.call(QStringLiteral("setInactivityTimeouts"), secs,secs);
+}
+
+int UnlockApp::readDisplayoffTimeFromFile()
+{
+    KSharedConfigPtr profilesConfig = KSharedConfig::openConfig(QStringLiteral("jingpowermanagementprofilesrc"), KConfig::SimpleConfig);
+    // Let's start: AC profile before anything else
+    KConfigGroup batteryProfile(profilesConfig, "Battery");
+    KConfigGroup dimDisplay(&batteryProfile, "DimDisplay");
+
+    int dimOnIdleTime = dimDisplay.readEntry("idleTime", 120000);
+    return dimOnIdleTime;
 }
 
 } // namespace

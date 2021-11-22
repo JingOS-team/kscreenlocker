@@ -28,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "logind.h"
 #include "kscreensaversettings.h"
 #include "powermanagement_inhibition.h"
-
+ 
 #include "kscreenlocker_logging.h"
 #include <config-kscreenlocker.h>
 
@@ -66,6 +66,21 @@ namespace ScreenLocker
 static const QString s_qtQuickBackend = QStringLiteral("QT_QUICK_BACKEND");
 
 static KSldApp * s_instance = nullptr;
+
+
+void DbusReceiver::onScreenUnlocked()
+{
+    qDebug()<<"[liubangguo]DbusReceiver::onScreenUnlocked";
+    emit unlocked();
+
+}
+
+void DbusReceiver::onScreenLocked()
+{
+    qDebug()<<"[liubangguo]DbusReceiver::onScreenLocked";
+    emit locked();
+}
+
 
 KSldApp* KSldApp::self()
 {
@@ -164,6 +179,19 @@ void KSldApp::initialize()
         initializeX11();
     }
 
+    //[liubangguo]for register dbus
+    QDBusConnection connection = QDBusConnection::sessionBus();
+    if(!connection.registerService(QStringLiteral("com.jingos.screenlockreceiver")))
+    {
+        qDebug() << "error:" << connection.lastError().message();
+        exit(-1);
+    }
+
+
+    connection.registerObject(QStringLiteral("/com/jingos/screenlockreceiver"), &m_dbusReceiver,QDBusConnection::ExportAllSlots);
+    connect(&m_dbusReceiver, &DbusReceiver::unlocked, this, &KSldApp::requestUnlock);
+    connect(&m_dbusReceiver, &DbusReceiver::locked, this, &KSldApp::requestLock);
+
     // Global keys
     if (KAuthorized::authorizeAction(QStringLiteral("lock_screen"))) {
         qCDebug(KSCREENLOCKER) << "Configuring Lock Action";
@@ -179,31 +207,7 @@ void KSldApp::initialize()
         );
     }
 
-    // idle support
-    auto idleTimeSignal = static_cast<void (KIdleTime:: *)(int)>(&KIdleTime::timeoutReached);
-    connect(KIdleTime::instance(), idleTimeSignal, this,
-        [this](int identifier) {
-            if (identifier != m_idleId) {
-                // not our identifier
-                return;
-            }
-            if (lockState() != Unlocked) {
-                return;
-            }
-            if (m_inhibitCounter // either we got a direct inhibit request thru our outdated o.f.Screensaver iface ...
-                    || isFdoPowerInhibited()) { // ... or the newer one at o.f.PowerManagement.Inhibit
-                // there is at least one process blocking the auto lock of screen locker
-                return;
-            }
-            if (m_lockGrace) {  // short-circuit if grace time is zero
-                m_inGraceTime = true;
-            } else if (m_lockGrace == -1) {
-                m_inGraceTime = true;  // if no timeout configured, grace time lasts forever
-            }
 
-            lock(EstablishLock::Delayed);
-        }
-    );
 
     m_lockProcess = new QProcess();
     m_lockProcess->setProcessChannelMode(QProcess::ForwardedErrorChannel);
@@ -211,6 +215,12 @@ void KSldApp::initialize()
     auto finishedSignal = static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished);
     connect(m_lockProcess, finishedSignal, this,
         [this](int exitCode, QProcess::ExitStatus exitStatus) {
+#if defined (__arm64__) || defined (__aarch64__)
+            doUnlock();
+            emit clear(); 
+            m_waylandServer->stop();
+#endif
+
             qCDebug(KSCREENLOCKER) << "Greeter process exitted with status:"
                      << exitStatus << "exit code:" << exitCode;
 
@@ -236,12 +246,21 @@ void KSldApp::initialize()
             qCWarning(KSCREENLOCKER) << "Greeter process exit unregular. Restarting lock.";
 
             m_greeterCrashedCounter++;
-            if (m_greeterCrashedCounter < 4) {
+            if (m_greeterCrashedCounter < 8) {
                 // Perhaps it crashed due to a graphics driver issue, force software rendering now
                 qCDebug(KSCREENLOCKER, "Trying to lock again with software rendering (%d/4).",
                        m_greeterCrashedCounter);
-                setForceSoftwareRendering(true);
+                #if !defined (__arm64__) && !defined (__aarch64__)
+                    setForceSoftwareRendering(true);
+                #else
+                    setForceSoftwareRendering(false);
+                #endif
+
+#if defined (__arm64__) || defined (__aarch64__)
+                lock(EstablishLock::Immediate);
+#else
                 startLockProcess(EstablishLock::Immediate);
+#endif
             } else if (m_lockWindow) {
                 qCWarning(KSCREENLOCKER)
                         << "Everything else failed. Need to put Greeter in emergency mode.";
@@ -254,6 +273,12 @@ void KSldApp::initialize()
     );
     connect(m_lockProcess, &QProcess::errorOccurred, this,
         [this](QProcess::ProcessError error) {
+#if defined (__arm64__) || defined (__aarch64__)
+            doUnlock();
+            emit clear();
+            m_waylandServer->stop();
+#endif
+
             if (error == QProcess::FailedToStart) {
                 qCDebug(KSCREENLOCKER) << "Greeter Process  failed to start. Trying to directly unlock again.";
                 doUnlock();
@@ -289,6 +314,7 @@ void KSldApp::initialize()
             }
         }
     );
+    /*[liubangguo]cancel preparesleep lockscreen signal
     connect(m_logind, &LogindIntegration::prepareForSleep, this,
         [this](bool goingToSleep) {
             if (!goingToSleep) {
@@ -300,6 +326,7 @@ void KSldApp::initialize()
             }
         }
     );
+    */
     connect(m_logind, &LogindIntegration::inhibited, this,
         [this]() {
             // if we are already locked, we immediately remove the inhibition lock
@@ -338,18 +365,23 @@ void KSldApp::initialize()
         }
     );
 
-    m_globalAccel = new GlobalAccel(this);
-    connect(this, &KSldApp::locked, m_globalAccel, &GlobalAccel::prepare);
-    connect(this, &KSldApp::unlocked, m_globalAccel, &GlobalAccel::release);
+    //[liubangguo]canceled key lock
+//    m_globalAccel = new GlobalAccel(this);
+//    connect(this, &KSldApp::locked, m_globalAccel, &GlobalAccel::prepare);
+//    connect(this, &KSldApp::unlocked, m_globalAccel, &GlobalAccel::release);
 
     // fallback for non-logind systems:
     // connect to signal emitted by Solid. This is emitted unconditionally also on logind enabled systems
     // ksld ignores it in case logind is used
+    //[liubangguo]cancel suspend in arm pad
+#if defined (__arm64__) || defined (__aarch64__)
+#else
     QDBusConnection::sessionBus().connect(QStringLiteral("org.kde.Solid.PowerManagement"),
                                           QStringLiteral("/org/kde/Solid/PowerManagement/Actions/SuspendSession"),
                                           QStringLiteral("org.kde.Solid.PowerManagement.Actions.SuspendSession"),
                                           QStringLiteral("aboutToSuspend"),
                                           this, SLOT(solidSuspend()));
+#endif
 
     configure();
 
@@ -570,22 +602,41 @@ void KSldApp::doUnlock()
 #endif
     }
     hideLockWindow();
+    //[liubangguo]
+#if defined (__arm64__) || defined (__aarch64__)
+#else
     // delete the window again, to get rid of event filter
     delete m_lockWindow;
     m_lockWindow = nullptr;
+    m_waylandServer->stop();
+    emit unlocked();
+#endif
+
     m_lockState = Unlocked;
     m_lockedTimer.invalidate();
     m_greeterCrashedCounter = 0;
     endGraceTime();
-    m_waylandServer->stop();
+
     KNotification::event(QStringLiteral("unlocked"),
                          i18n("Screen unlocked"),
                          QPixmap(),
                          nullptr,
                          KNotification::CloseOnTimeout,
                          QStringLiteral("ksmserver"));
-    emit unlocked();
+    qDebug()<<"[liubangguo]KSldApp::emit unlocked()!!";
+
+
     emit lockStateChanged();
+}
+
+void KSldApp::requestLock(){
+    qDebug()<<"[liubangguo]KSldApp::requestLock() in!!";
+    lock(EstablishLock::Immediate);
+}
+
+void KSldApp::requestUnlock(){
+    qDebug()<<"[liubangguo]KSldApp::requestUnlock() in!!";
+    doUnlock();
 }
 
 bool KSldApp::isFdoPowerInhibited() const
@@ -629,20 +680,31 @@ void KSldApp::startLockProcess(EstablishLock establishLock)
         env.insert(s_qtQuickBackend, QStringLiteral("software"));
     }
 
-    // start the Wayland server
-    int fd = m_waylandServer->start();
-    if (fd == -1) {
-        qCWarning(KSCREENLOCKER) << "Could not start the Wayland server.";
-        emit m_lockProcess->errorOccurred(QProcess::FailedToStart);
-        return;
+    //[liubangguo] do not kill lock process
+    if( m_lockProcess->state() == QProcess::NotRunning){
+        // start the Wayland server
+        int fd = m_waylandServer->start();
+        if (fd == -1) {
+            qCWarning(KSCREENLOCKER) << "Could not start the Wayland server.";
+            emit m_lockProcess->errorOccurred(QProcess::FailedToStart);
+            return;
+        }
+
+        args << QStringLiteral("--ksldfd");
+        args << QString::number(fd);
+
+        m_lockProcess->setProcessEnvironment(env);
+
+
+        m_lockProcess->start(QStringLiteral(KSCREENLOCKER_GREET_BIN), args);
+        close(fd);
     }
-
-    args << QStringLiteral("--ksldfd");
-    args << QString::number(fd);
-
-    m_lockProcess->setProcessEnvironment(env);
-    m_lockProcess->start(QStringLiteral(KSCREENLOCKER_GREET_BIN), args);
-    close(fd);
+    else{
+        QDBusConnection::sessionBus().call(QDBusMessage::createMethodCall(QStringLiteral("com.jingos.screenlocker"),
+                                                                               QStringLiteral("/com/jingos/screenlocker"),
+                                                                               QStringLiteral("com.jingos.screenlocker"),
+                                                                               QStringLiteral("lockImmediately")));
+    }
 }
 
 void KSldApp::userActivity()
@@ -677,7 +739,8 @@ void KSldApp::showLockWindow()
         if (!m_lockWindow) {
             return;
         }
-        m_lockWindow->setGlobalAccel(m_globalAccel);
+        //[liubangguo]canceled key event
+//        m_lockWindow->setGlobalAccel(m_globalAccel);
 
         connect(m_lockWindow, &AbstractLocker::lockWindowShown, m_lockWindow,
             [this] {
@@ -771,12 +834,15 @@ void KSldApp::setGreeterEnvironment(const QProcessEnvironment &env)
 
 bool KSldApp::event(QEvent *event)
 {
-    if (m_globalAccel && event->type() == QEvent::KeyPress) {
-        if (m_globalAccel->keyEvent(static_cast<QKeyEvent*>(event))) {
-            event->setAccepted(true);
-        }
-    }
-    return false;
+    //[liubangguo] canceled event
+    return true;
+
+//    if (m_globalAccel && event->type() == QEvent::KeyPress) {
+//        if (m_globalAccel->keyEvent(static_cast<QKeyEvent*>(event))) {
+//            event->setAccepted(true);
+//        }
+//    }
+//    return false;
 }
 
 } // namespace

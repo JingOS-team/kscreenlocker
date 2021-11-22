@@ -3,6 +3,7 @@
  This file is part of the KDE project.
 
 Copyright (C) 2011 Martin Gräßlin <mgraesslin@kde.org>
+Copyright (C) 2021 Dexiang Meng <dexiang.meng@jingos.com>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -20,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import QtQuick 2.0
 import org.kde.plasma.components 2.0 as PlasmaComponents
 import org.kde.plasma.extras 2.0 as PlasmaExtras
+import jingos.display 1.0
 
 Item {
     readonly property bool switchUserSupported: sessionsModel.canSwitchUser
@@ -32,7 +34,7 @@ Item {
 
     anchors {
         fill: parent
-        margins: 6
+        margins: JDisplay.dp(6)
     }
 
     PlasmaExtras.ScrollArea {
@@ -40,9 +42,9 @@ Item {
             left: parent.left
             right: parent.right
             bottom: buttonRow.top
-            bottomMargin: 5
+            bottomMargin: JDisplay.dp(5)
         }
-        height: parent.height - explainText.implicitHeight - buttonRow.height - 10
+        height: parent.height - explainText.implicitHeight - buttonRow.height - JDisplay.dp(10)
 
         ListView {
             id: userSessionsView
